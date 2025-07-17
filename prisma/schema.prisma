@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  staff
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(staff)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  products  Product[]
+  clUpdates ClUpdate[]
+
+  @@map("users")
+}
+
+model Category {
+  id   Int      @id @default(autoincrement())
+  name String   @unique
+
+  // Relations
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String
+  categoryId  Int?     @map("category_id")
+  totalCl     Float    @map("total_cl")
+  remainingCl Float    @map("remaining_cl")
+  pricePerCl  Float?   @map("price_per_cl")
+  location    String?
+  photoUrl    String?  @map("photo_url")
+  createdById Int?     @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  category  Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdBy User?      @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  clUpdates ClUpdate[]
+
+  @@map("products")
+}
+
+model ClUpdate {
+  id          Int      @id @default(autoincrement())
+  productId   Int      @map("product_id")
+  oldCl       Float    @map("old_cl")
+  newCl       Float    @map("new_cl")
+  updatedById Int?     @map("updated_by")
+  note        String?
+  updatedAt   DateTime @default(now()) @map("updated_at")
+
+  // Relations
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  updatedBy User?   @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@map("cl_updates")
+}

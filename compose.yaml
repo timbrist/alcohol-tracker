@@ -1,0 +1,9 @@
+services:
+  database:
+    container_name: alcohol_tracker
+    image: postgres:17.0
+    restart: unless-stopped
+    env_file:
+      - project.env
+    ports:
+      - "5432:5432"
